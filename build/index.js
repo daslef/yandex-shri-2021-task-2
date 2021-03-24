@@ -279,6 +279,7 @@ class Slide {
         const activity = this.templateActivity(currentSprintActivity)
         const vote = this.mockTemplateVote()
 
+        return [vote, leaders, chart, diagram, activity]
         // fs.writeFileSync('test.json', JSON.stringify([vote, leaders, chart, diagram, activity]));
     }
 
@@ -287,7 +288,8 @@ class Slide {
 
 function prepareData(entities, { sprintId }) {
     slide = new Slide(entities, sprintId)
-    slide.prepare()
+    data = slide.prepare()
+    return data
 }
 
 
