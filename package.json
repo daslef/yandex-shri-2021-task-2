@@ -6,6 +6,7 @@
   "scripts": {
     "build": "rimraf build && rollup -c rollup.config.js",
     "lint": "eslint . --ext .ts",
+    "format": "prettier --config .prettierrc 'src/**/*.ts' --write",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -27,10 +28,18 @@
     "@typescript-eslint/parser": "^4.19.0",
     "deepmerge": "^4.2.2",
     "eslint": "^7.22.0",
+    "husky": "^5.2.0",
+    "lint-staged": "^10.5.4",
+    "prettier": "^2.2.1",
     "rimraf": "^3.0.2",
     "rollup": "^2.42.4"
   },
   "dependencies": {
     "typescript": "^4.2.3"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run format && npm run lint && npm run lint-staged"
+    }
   }
 }
