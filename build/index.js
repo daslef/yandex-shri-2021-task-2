@@ -104,7 +104,15 @@ var DataParser = (function () {
         return leaders;
     };
     DataParser.prototype.getActivity = function () {
-        var activity = new Array(7).fill(new Array(24).fill(0));
+        var activity = [
+            new Array(24).fill(0),
+            new Array(24).fill(0),
+            new Array(24).fill(0),
+            new Array(24).fill(0),
+            new Array(24).fill(0),
+            new Array(24).fill(0),
+            new Array(24).fill(0)
+        ];
         this.currentSprintCommits.map(function (commit) {
             var date = new Date(commit.timestamp);
             var dayOfWeek = date.getDay();

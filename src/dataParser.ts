@@ -18,20 +18,6 @@ export interface DataParserInterface {
     commits?: Commit[];
     summaries?: Summary[];
     comments?: Comment[];
-
-    parseData(): void;
-    filterComments(): void;
-    getSprintMetadata(sprintId: SprintId): Sprint;
-    getSprintCommits(sprintId: SprintId): Commit[];
-    getCommitSummaries(commit: Commit): Summary[];
-    getCommitDiff(commit: Commit): Number[];
-    getSprintDiffs(sprintCommits: Commit[]): Number[];
-
-    getSprintLeaders(data: Commit[] | Comment[], category: "likes" | "commits"): LeaderInterface[];
-    getActivity(): ActivityWeek;
-    compareSprintCommits(): void;
-    compareSprintDiffs(): DiagramCategory[];
-    prepare(): void;
 }
 
 
@@ -55,7 +41,7 @@ export default class DataParser implements DataParserInterface {
         this.currentSprintId = id
     }
 
-    parseData() {
+    parseData(): void {
         this.data.map(obj => {
             if (obj.type == 'User') {
                 this.users.push(obj)
@@ -74,46 +60,46 @@ export default class DataParser implements DataParserInterface {
         })
     }
 
-    filterComments() {
+    filterComments(): void {
         const { startAt, finishAt } = this.getSprintMetadata(this.currentSprintId)
         this.comments = this.comments.filter(o => (o.createdAt >= startAt) && (o.createdAt < finishAt))
     }
     
-    filterCommits() {
+    filterCommits(): void {
         this.currentSprintCommits = this.getSprintCommits(this.currentSprintId)
         this.previousSprintCommits = this.getSprintCommits(this.currentSprintId - 1)
     }
 
-    getSprintMetadata(sprintId: SprintId) {
+    getSprintMetadata(sprintId: SprintId): Sprint {
         return this.sprints.filter((sprint: Sprint) => sprint.id == sprintId)[0]
     }
     
-    getSprintCommits(sprintId: SprintId) {
+    getSprintCommits(sprintId: SprintId): Commit[] {
         const { startAt, finishAt } = this.getSprintMetadata(sprintId)
         return this.commits.filter((o: Commit) => {
             return (o.timestamp >= startAt) && (o.timestamp < finishAt)
         })
     }
 
-    getCommitSummaries(commit: Commit) {
+    getCommitSummaries(commit: Commit): Summary[] {
         return commit.summaries.map(summaryId => {
             return this.summaries.filter((obj: Summary) => obj.id == summaryId)[0]
         })
     }
 
-    getCommitDiff(commit: Commit) {
+    getCommitDiff(commit: Commit): number[] {
         return this
             .getCommitSummaries(commit)
             .map(summary => summary.added + summary.removed)
     }
 
-    getSprintDiffs(sprintCommits: Commit[]) {
+    getSprintDiffs(sprintCommits: Commit[]): number[] {
         return sprintCommits
             .map(commit => this.getCommitDiff(commit))
             .map(commitDiffs => commitDiffs.reduce((acc, cur) => acc + cur, 0))
     }
 
-    getSprintLeaders(data: Commit[] | Comment[], category: "likes" | "commits") {
+    getSprintLeaders(data: Commit[] | Comment[], category: "likes" | "commits"): LeaderInterface[] {
 
         const groupByUser: DictInterface = {}
         const leaders: LeaderInterface[] = []
@@ -149,9 +135,17 @@ export default class DataParser implements DataParserInterface {
         return leaders
     }
 
-    getActivity() {
+    getActivity(): ActivityWeek {
 
-        const activity = new Array(7).fill(new Array(24).fill(0))
+        const activity = [
+            new Array(24).fill(0),
+            new Array(24).fill(0),
+            new Array(24).fill(0),
+            new Array(24).fill(0),
+            new Array(24).fill(0),
+            new Array(24).fill(0),
+            new Array(24).fill(0)
+        ]
 
         this.currentSprintCommits.map(commit => {
             const date = new Date(commit.timestamp)
@@ -189,7 +183,7 @@ export default class DataParser implements DataParserInterface {
         return comparison.sort((a, b) => parseInt(a.title) - parseInt(b.title))
     }
 
-    compareSprintDiffs() {
+    compareSprintDiffs(): DiagramCategory[] {
         
         const currentSprintDiffs = this.getSprintDiffs(this.currentSprintCommits)
         const previousSprintDiffs = this.getSprintDiffs(this.previousSprintCommits)
@@ -263,7 +257,7 @@ export default class DataParser implements DataParserInterface {
         return this.currentSprint.name
     }
 
-    prepare() {
+    prepare(): void {
         this.parseData()
         this.filterComments()
         this.filterCommits()

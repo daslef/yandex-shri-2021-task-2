@@ -105,7 +105,7 @@ export type EntityType = Entity['type'];
 
 
 export interface DictInterface {
-    [key: string]: any
+    [key: string]: number
 }
 
 export interface LeaderInterface {

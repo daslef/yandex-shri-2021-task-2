@@ -1,10 +1,10 @@
-import { TemplateAlias, DiagramCategory, StoryInterface, ActivityWeek } from './stories'
-import { LeaderInterface, User } from './types'
+import { TemplateAlias, StoryInterface, ActivityWeek } from './stories'
+import { LeaderInterface } from './types'
 
 
 export default class Template {
 
-    static templateLeaders(subtitle: string, users: LeaderInterface[]) {
+    static templateLeaders(subtitle: string, users: LeaderInterface[]): StoryInterface {
         return {
             "alias": "leaders" as TemplateAlias,
             "data": {
@@ -16,7 +16,7 @@ export default class Template {
         }
     }
 
-    static templateChart(subtitle: string, commitsData: any[], usersData: any[]) {
+    static templateChart(subtitle: string, commitsData: any[], usersData: LeaderInterface[]): StoryInterface {
         return {
             "alias": "chart" as TemplateAlias,
             "data": {
@@ -28,7 +28,7 @@ export default class Template {
         }
     }
 
-    static templateDiagram(subtitle: string, data: any ) {
+    static templateDiagram(subtitle: string, data: any ): StoryInterface {
 
         const { current, previous, categories } = data
         const difference = current - previous
@@ -45,7 +45,7 @@ export default class Template {
           }
     }
 
-    static templateActivity(subtitle: string, activity: ActivityWeek) {
+    static templateActivity(subtitle: string, activity: ActivityWeek): StoryInterface {
         return {
             "alias": "activity" as TemplateAlias,
             "data": {
@@ -56,7 +56,7 @@ export default class Template {
           }
     }
 
-    static templateVote(subtitle: string, users: LeaderInterface[]) {
+    static templateVote(subtitle: string, users: LeaderInterface[]): StoryInterface {
         return {
             "alias": "vote" as TemplateAlias,
             "data": {
@@ -75,7 +75,7 @@ export default class Template {
             : template === 'diagram' ? ['коммит', 'коммита', 'коммитов'] 
             : []
 
-        const postfix = (numeral: any) => {
+        const postfix = (numeral: string|number) => {
 
             let i = Math.abs(Number(numeral)) % 100
 
