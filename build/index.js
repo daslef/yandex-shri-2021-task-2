@@ -1,5 +1,3 @@
-// const fs = require('fs');
-
 class Slide {
 
     constructor(data, id) {
@@ -67,7 +65,7 @@ class Slide {
               "title": "Размер коммитов",
               "subtitle": this.currentSprint.name,
               "totalText": this.textProcessed(total, 'diagram'),
-              "differenceText": `${difference} с прошлого спринта`,
+              "differenceText": `${difference > 0 ? '+' : ''}${difference} с прошлого спринта`,
               "categories": this.textProcessed(diffCategories, 'diagram')
             }
           }
@@ -127,10 +125,11 @@ class Slide {
             }
 
             return data.map(({ title, valueText, differenceText }) => {
+                const prefix = Number(differenceText) > 0 ? '+' : ''
                 return { 
                     title, 
                     valueText: postfix(valueText),
-                    differenceText: postfix(differenceText)
+                    differenceText: prefix.concat(postfix(differenceText))
                 }
             })
         }
@@ -145,7 +144,6 @@ class Slide {
         return this.commits.filter(o => (o.timestamp >= sprintStartAt) && (o.timestamp < sprintFinishAt))
     }
 
-    // в summaries только id или могут быть и объекты?
     getCommitSummaries(commit) {
         const commitSummaries = []
         commit.summaries.map(summaryId => {
@@ -340,13 +338,13 @@ class Slide {
 function prepareData(entities, { sprintId }) {
     slide = new Slide(entities, sprintId)
     const data = slide.prepare()
-    // fs.writeFileSync('test.json', JSON.stringify(data));
+    // require('fs').writeFileSync('test.json', JSON.stringify(data));
     return data
 }
 
-// let rawData = fs.readFileSync('input.json');
+// let rawData = require('fs').readFileSync('input.json');
 // let data = JSON.parse(rawData);
-// prepareData(data, { sprintId: 977 })
+// prepareData(data, { sprintId: 991 })
 
 
 module.exports = { prepareData }
