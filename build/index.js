@@ -1,6 +1,5 @@
 // const fs = require('fs');
 
-
 class Slide {
 
     constructor(data, id) {
@@ -11,6 +10,7 @@ class Slide {
         this.users = []
         this.commits = []
         this.summaries = []
+        this.comments = []
     }
 
     parseData() {
@@ -26,6 +26,8 @@ class Slide {
                 this.commits.push(obj)
             } else if (obj.type == 'Summary') {
                 this.summaries.push(obj)
+            } else if (obj.type == 'Comment') {
+                this.comments.push(obj)
             }
         })
     }
@@ -64,9 +66,9 @@ class Slide {
             "data": {
               "title": "Размер коммитов",
               "subtitle": this.currentSprint.name,
-              "totalText": `${total} коммита`,
+              "totalText": this.textProcessed(total, 'diagram'),
               "differenceText": `${difference} с прошлого спринта`,
-              "categories": diffCategories
+              "categories": this.textProcessed(diffCategories, 'diagram')
             }
           }
     }
@@ -82,29 +84,56 @@ class Slide {
           }
     }
 
-    mockTemplateVote() {
+    templateVote(users) {
         return {
             "alias": "vote",
             "data": {
               "title": "Самый 🔎 внимательный разработчик",
               "subtitle": this.currentSprint.name,
               "emoji": "🔎",
-              "users": [
-                {"id": 7, "name": "Дмитрий Андриянов", "avatar": "7.jpg", "valueText": "306 голосов"},
-                {"id": 8, "name": "Александр Иванков", "avatar": "8.jpg", "valueText": "305 голосов"},
-                {"id": 5, "name": "Александр Николаичев", "avatar": "5.jpg", "valueText": "284 голоса"},
-                {"id": 4, "name": "Вадим Пацев", "avatar": "4.jpg", "valueText": "273 голоса"},
-                {"id": 1, "name": "Евгений Дементьев", "avatar": "1.jpg", "valueText": "270 голосов"},
-                {"id": 6, "name": "Андрей Мокроусов", "avatar": "6.jpg", "valueText": "264 голоса"},
-                {"id": 2, "name": "Александр Шлейко", "avatar": "2.jpg", "valueText": "242 голоса"},
-                {"id": 11, "name": "Юрий Фролов", "avatar": "11.jpg", "valueText": "224 голоса"},
-                {"id": 9, "name": "Сергей Бережной", "avatar": "9.jpg", "valueText": "219 голосов"},
-                {"id": 3, "name": "Дарья Ковалева", "avatar": "3.jpg", "valueText": "216 голосов"},
-                {"id": 10, "name": "Яна Берникова", "avatar": "10.jpg", "valueText": "212 голосов"},
-                {"id": 12, "name": "Алексей Ярошевич", "avatar": "12.jpg", "valueText": "210 голосов"}
-              ]
+              "users": this.textProcessed(users, 'vote')
             }
           }
+    }
+
+    textProcessed(data, template) {
+
+        const wordForms = template === 'vote' ? ['голос', 'голоса', 'голосов']
+            : template === 'diagram' ? ['коммит', 'коммита', 'коммитов'] 
+            : []
+
+        const postfix = (numeral) => {
+
+            let i = Math.abs(Number(numeral)) % 100
+
+            if (i >= 11 && i <= 19) {
+                return `${numeral} ${wordForms[2]}`
+            }
+
+            i = i % 10
+            const postfix = (i == 1) ? wordForms[0] : (i >= 2 && i <= 4) ? wordForms[1] : wordForms[2]
+            return `${numeral} ${postfix}`
+
+        } 
+
+        if (template === 'vote') {
+            return data.map(obj => ({ ...obj, valueText: postfix(obj.valueText) }))
+        }
+
+        if (template === 'diagram') {
+
+            if (!(data instanceof Object)) {
+                return postfix(data)
+            }
+
+            return data.map(({ title, valueText, differenceText }) => {
+                return { 
+                    title, 
+                    valueText: postfix(valueText),
+                    differenceText: postfix(differenceText)
+                }
+            })
+        }
     }
 
     getSprintMetadata(sprintId) {
@@ -129,11 +158,7 @@ class Slide {
         const commitSummaries = this.getCommitSummaries(commit)
         const commitDiff = []
         commitSummaries.map(summary => {
-            try {
-                commitDiff.push(summary.added + summary.removed)
-            } catch {
-                console.log(summary)
-            }
+            commitDiff.push(summary.added + summary.removed)
         })
         return commitDiff
     }
@@ -145,6 +170,31 @@ class Slide {
         })
         return sprintDiffs
             .map(commitDiffs => commitDiffs.reduce((acc, cur) => acc + cur, 0))
+    }
+
+    getSprintLikes(comments) {
+        const likesByUser = {}
+        comments.map(comment => {
+            if (!Object.keys(likesByUser).includes(`${comment.author}`)) {
+                likesByUser[comment.author] = comment.likes.length
+            } else {
+                likesByUser[comment.author] += comment.likes.length
+            }
+        })
+
+        const leaders = []
+        Object.entries(likesByUser)
+            .sort((a, b) => b[1] - a[1])
+            .map(([userId, value]) => {
+                const { id, name, avatar } = this.users.filter(user => user.id == userId)[0]
+                leaders.push({ "id": id, "name": name, "avatar": avatar, "valueText": value.toString() })
+            })
+        return leaders
+    }
+
+    getSprintComments(sprintId) {
+        const { startAt: sprintStartAt, finishAt: sprintFinishAt } = this.getSprintMetadata(sprintId)
+        return this.comments.filter(o => (o.createdAt >= sprintStartAt) && (o.createdAt < sprintFinishAt))
     }
 
     getSprintLeaders(sprintCommits) {
@@ -249,8 +299,8 @@ class Slide {
         return categories.map(({ title, currentSprintCount, previousSprintCount }) => {
             return { 
                 title, 
-                valueText: `${currentSprintCount} коммита`, 
-                differenceText: `${currentSprintCount - previousSprintCount} коммита`
+                valueText: currentSprintCount, 
+                differenceText: currentSprintCount - previousSprintCount
             }
         })
 
@@ -263,6 +313,8 @@ class Slide {
 
         const currentCommits = this.getSprintCommits(this.currentSprintId)
         const currentSprintDiffs = this.getSprintDiffs(currentCommits)
+        const currentSprintComments = this.getSprintComments(this.currentSprintId)
+        const currentSprintLikes = this.getSprintLikes(currentSprintComments)
         const currentSprintLeaders = this.getSprintLeaders(currentCommits)
         const currentSprintActivity = this.getActivity(currentCommits)
 
@@ -273,14 +325,13 @@ class Slide {
 
         const diffCategories = this.compareSprintDiffs(currentSprintDiffs, previousSprintDiffs)
 
+        const vote = this.templateVote(currentSprintLikes)
         const leaders = this.templateLeaders(currentSprintLeaders)
         const chart = this.templateChart(sprintsCommitsComparison, currentSprintLeaders)
         const diagram = this.templateDiagram(currentCommits, previousCommits, diffCategories)
         const activity = this.templateActivity(currentSprintActivity)
-        const vote = this.mockTemplateVote()
 
         return [vote, leaders, chart, diagram, activity]
-        // fs.writeFileSync('test.json', JSON.stringify([vote, leaders, chart, diagram, activity]));
     }
 
 }
@@ -288,10 +339,10 @@ class Slide {
 
 function prepareData(entities, { sprintId }) {
     slide = new Slide(entities, sprintId)
-    data = slide.prepare()
+    const data = slide.prepare()
+    // fs.writeFileSync('test.json', JSON.stringify(data));
     return data
 }
-
 
 // let rawData = fs.readFileSync('input.json');
 // let data = JSON.parse(rawData);
