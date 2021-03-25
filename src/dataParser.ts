@@ -41,14 +41,14 @@ export default class DataParser implements DataParserInterface {
     currentSprintId: SprintId;
     currentSprint: Sprint;
 
-    users: User[];
-    sprints: Sprint[];
-    commits: Commit[];
-    summaries: Summary[];
-    comments: Comment[];
+    users: User[] = [];
+    sprints: Sprint[] = [];
+    commits: Commit[] = [];
+    summaries: Summary[] = [];
+    comments: Comment[] = [];
 
-    currentSprintCommits: Commit[];
-    previousSprintCommits: Commit[];
+    currentSprintCommits: Commit[] = [];
+    previousSprintCommits: Commit[] = [];
 
     constructor(data: Entity[], id: SprintId) {
         this.data = data
@@ -125,13 +125,17 @@ export default class DataParser implements DataParserInterface {
                 : obj.author.toString()
 
             if (!Object.keys(groupByUser).includes(index)) {
-                groupByUser[index] = (category == 'likes') 
-                    ? 1 
-                    : (obj as Comment).likes.length
+                if (category == 'commits') {
+                    groupByUser[index] = 1
+                } else {
+                    groupByUser[index] = (obj as Comment).likes.length
+                }
             } else {
-                groupByUser[index] = (category == 'likes') 
-                    ? groupByUser[index] + 1 
-                    : groupByUser[index] + (obj as Comment).likes.length
+                if (category == 'commits') {
+                    groupByUser[index]++
+                } else {
+                    groupByUser[index] += (obj as Comment).likes.length
+                }
             }
         })
 
@@ -141,7 +145,7 @@ export default class DataParser implements DataParserInterface {
                 const user = this.users.filter((user: User) => user.id.toString() == userId)[0]
                 leaders.push({ "id": user.id, "name": user.name, "avatar": user.avatar, "valueText": value.toString() })
             })
-
+        
         return leaders
     }
 

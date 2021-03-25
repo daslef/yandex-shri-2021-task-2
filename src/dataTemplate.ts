@@ -1,5 +1,3 @@
-import * as types from './types'
-
 import { TemplateAlias, DiagramCategory, StoryInterface, ActivityWeek } from './stories'
 import { LeaderInterface, User } from './types'
 

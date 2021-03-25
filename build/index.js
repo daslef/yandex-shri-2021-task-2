@@ -2,6 +2,13 @@
 
 var DataParser = (function () {
     function DataParser(data, id) {
+        this.users = [];
+        this.sprints = [];
+        this.commits = [];
+        this.summaries = [];
+        this.comments = [];
+        this.currentSprintCommits = [];
+        this.previousSprintCommits = [];
         this.data = data;
         this.currentSprintId = id;
     }
@@ -71,14 +78,20 @@ var DataParser = (function () {
                 ? obj.author.id.toString()
                 : obj.author.toString();
             if (!Object.keys(groupByUser).includes(index)) {
-                groupByUser[index] = (category == 'likes')
-                    ? 1
-                    : obj.likes.length;
+                if (category == 'commits') {
+                    groupByUser[index] = 1;
+                }
+                else {
+                    groupByUser[index] = obj.likes.length;
+                }
             }
             else {
-                groupByUser[index] = (category == 'likes')
-                    ? groupByUser[index] + 1
-                    : groupByUser[index] + obj.likes.length;
+                if (category == 'commits') {
+                    groupByUser[index]++;
+                }
+                else {
+                    groupByUser[index] += obj.likes.length;
+                }
             }
         });
         Object.entries(groupByUser)
