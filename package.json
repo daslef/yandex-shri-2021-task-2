@@ -1,0 +1,36 @@
+{
+  "name": "shri-2021-task-2",
+  "version": "1.0.0",
+  "description": "В этом репозитории находятся материалы тестового задания «Данные для Stories» для [17-й Школы разработки интерфейсов](https://yandex.ru/promo/academy/shri) (лето-2021, Москва).",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "rimraf build && rollup -c rollup.config.js",
+    "lint": "eslint . --ext .ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daslef/yandex-shri-2021-task-2.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/daslef/yandex-shri-2021-task-2/issues"
+  },
+  "homepage": "https://github.com/daslef/yandex-shri-2021-task-2#readme",
+  "devDependencies": {
+    "@open-wc/building-rollup": "^1.9.4",
+    "@rollup/plugin-typescript": "^8.2.0",
+    "@types/node": "^14.14.35",
+    "@typescript-eslint/eslint-plugin": "^4.19.0",
+    "@typescript-eslint/parser": "^4.19.0",
+    "deepmerge": "^4.2.2",
+    "eslint": "^7.22.0",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.42.4"
+  },
+  "dependencies": {
+    "typescript": "^4.2.3"
+  }
+}

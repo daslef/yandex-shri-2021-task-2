@@ -1,239 +1,103 @@
-class Slide {
+'use strict';
 
-    constructor(data, id) {
-        this.data = data
-        this.currentSprintId = id
-        this.currentSprint = {}
-        this.sprints = []
-        this.users = []
-        this.commits = []
-        this.summaries = []
-        this.comments = []
+var DataParser = (function () {
+    function DataParser(data, id) {
+        this.data = data;
+        this.currentSprintId = id;
     }
-
-    parseData() {
-        this.data.map(obj => {
+    DataParser.prototype.parseData = function () {
+        var _this = this;
+        this.data.map(function (obj) {
             if (obj.type == 'User') {
-                this.users.push(obj)
-            } else if (obj.type == 'Sprint') {
-                if (obj.id == this.currentSprintId) {
-                    this.currentSprint = obj
+                _this.users.push(obj);
+            }
+            else if (obj.type == 'Sprint') {
+                if (obj.id == _this.currentSprintId) {
+                    _this.currentSprint = obj;
                 }
-                this.sprints.push(obj)
-            } else if (obj.type == 'Commit') {
-                this.commits.push(obj)
-            } else if (obj.type == 'Summary') {
-                this.summaries.push(obj)
-            } else if (obj.type == 'Comment') {
-                this.comments.push(obj)
+                _this.sprints.push(obj);
             }
-        })
-    }
-    
-    templateLeaders(users) {
-        return {
-            "alias": "leaders",
-            "data": {
-              "title": "Больше всего коммитов",
-              "subtitle": this.currentSprint.name,
-              "emoji": "👑",
-              "users": users
+            else if (obj.type == 'Commit') {
+                _this.commits.push(obj);
             }
-        }
-    }
-
-    templateChart(commitsData, usersData) {
-        return {
-            "alias": "chart",
-            "data": {
-              "title": "Коммиты",
-              "subtitle": this.currentSprint.name,
-              "values": commitsData,
-              "users": usersData
+            else if (obj.type == 'Summary') {
+                _this.summaries.push(obj);
             }
-        }
-    }
-
-    templateDiagram(currentCommits, previousCommits, diffCategories) {
-
-        const total = currentCommits.length
-        const difference = total - previousCommits.length
-
-        return {
-            "alias": "diagram",
-            "data": {
-              "title": "Размер коммитов",
-              "subtitle": this.currentSprint.name,
-              "totalText": this.textProcessed(total, 'diagram'),
-              "differenceText": `${difference > 0 ? '+' : ''}${difference} с прошлого спринта`,
-              "categories": this.textProcessed(diffCategories, 'diagram')
+            else if (obj.type == 'Comment') {
+                _this.comments.push(obj);
             }
-          }
-    }
-
-    templateActivity(activity) {
-        return {
-            "alias": "activity",
-            "data": {
-              "title": "Коммиты",
-              "subtitle": this.currentSprint.name,
-              "data": activity
+        });
+    };
+    DataParser.prototype.filterComments = function () {
+        var _a = this.getSprintMetadata(this.currentSprintId), startAt = _a.startAt, finishAt = _a.finishAt;
+        this.comments = this.comments.filter(function (o) { return (o.createdAt >= startAt) && (o.createdAt < finishAt); });
+    };
+    DataParser.prototype.filterCommits = function () {
+        this.currentSprintCommits = this.getSprintCommits(this.currentSprintId);
+        this.previousSprintCommits = this.getSprintCommits(this.currentSprintId - 1);
+    };
+    DataParser.prototype.getSprintMetadata = function (sprintId) {
+        return this.sprints.filter(function (sprint) { return sprint.id == sprintId; })[0];
+    };
+    DataParser.prototype.getSprintCommits = function (sprintId) {
+        var _a = this.getSprintMetadata(sprintId), startAt = _a.startAt, finishAt = _a.finishAt;
+        return this.commits.filter(function (o) {
+            return (o.timestamp >= startAt) && (o.timestamp < finishAt);
+        });
+    };
+    DataParser.prototype.getCommitSummaries = function (commit) {
+        var _this = this;
+        return commit.summaries.map(function (summaryId) {
+            return _this.summaries.filter(function (obj) { return obj.id == summaryId; })[0];
+        });
+    };
+    DataParser.prototype.getCommitDiff = function (commit) {
+        return this
+            .getCommitSummaries(commit)
+            .map(function (summary) { return summary.added + summary.removed; });
+    };
+    DataParser.prototype.getSprintDiffs = function (sprintCommits) {
+        var _this = this;
+        return sprintCommits
+            .map(function (commit) { return _this.getCommitDiff(commit); })
+            .map(function (commitDiffs) { return commitDiffs.reduce(function (acc, cur) { return acc + cur; }, 0); });
+    };
+    DataParser.prototype.getSprintLeaders = function (data, category) {
+        var _this = this;
+        var groupByUser = {};
+        var leaders = [];
+        data.map(function (obj) {
+            var index = obj.author instanceof Object
+                ? obj.author.id.toString()
+                : obj.author.toString();
+            if (!Object.keys(groupByUser).includes(index)) {
+                groupByUser[index] = (category == 'likes')
+                    ? 1
+                    : obj.likes.length;
             }
-          }
-    }
-
-    templateVote(users) {
-        return {
-            "alias": "vote",
-            "data": {
-              "title": "Самый 🔎 внимательный разработчик",
-              "subtitle": this.currentSprint.name,
-              "emoji": "🔎",
-              "users": this.textProcessed(users, 'vote')
+            else {
+                groupByUser[index] = (category == 'likes')
+                    ? groupByUser[index] + 1
+                    : groupByUser[index] + obj.likes.length;
             }
-          }
-    }
-
-    textProcessed(data, template) {
-
-        const wordForms = template === 'vote' ? ['голос', 'голоса', 'голосов']
-            : template === 'diagram' ? ['коммит', 'коммита', 'коммитов'] 
-            : []
-
-        const postfix = (numeral) => {
-
-            let i = Math.abs(Number(numeral)) % 100
-
-            if (i >= 11 && i <= 19) {
-                return `${numeral} ${wordForms[2]}`
-            }
-
-            i = i % 10
-            const postfix = (i == 1) ? wordForms[0] : (i >= 2 && i <= 4) ? wordForms[1] : wordForms[2]
-            return `${numeral} ${postfix}`
-
-        } 
-
-        if (template === 'vote') {
-            return data.map(obj => ({ ...obj, valueText: postfix(obj.valueText) }))
-        }
-
-        if (template === 'diagram') {
-
-            if (!(data instanceof Object)) {
-                return postfix(data)
-            }
-
-            return data.map(({ title, valueText, differenceText }) => {
-                const prefix = Number(differenceText) > 0 ? '+' : ''
-                return { 
-                    title, 
-                    valueText: postfix(valueText),
-                    differenceText: prefix.concat(postfix(differenceText))
-                }
-            })
-        }
-    }
-
-    getSprintMetadata(sprintId) {
-        return this.sprints.filter(sprint => sprint.id == sprintId)[0]
-    }
-    
-    getSprintCommits(sprintId) {
-        const { startAt: sprintStartAt, finishAt: sprintFinishAt } = this.getSprintMetadata(sprintId)
-        return this.commits.filter(o => (o.timestamp >= sprintStartAt) && (o.timestamp < sprintFinishAt))
-    }
-
-    getCommitSummaries(commit) {
-        const commitSummaries = []
-        commit.summaries.map(summaryId => {
-            commitSummaries.push(this.summaries.filter(obj => obj.id == summaryId)[0])
-        })
-        return commitSummaries
-    }
-
-    getCommitDiff(commit) {
-        const commitSummaries = this.getCommitSummaries(commit)
-        const commitDiff = []
-        commitSummaries.map(summary => {
-            commitDiff.push(summary.added + summary.removed)
-        })
-        return commitDiff
-    }
-
-    getSprintDiffs(sprintCommits) {
-        const sprintDiffs = []
-        sprintCommits.map(commit => {
-            sprintDiffs.push(this.getCommitDiff(commit))
-        })
-        return sprintDiffs
-            .map(commitDiffs => commitDiffs.reduce((acc, cur) => acc + cur, 0))
-    }
-
-    getSprintLikes(comments) {
-        const likesByUser = {}
-        comments.map(comment => {
-            if (!Object.keys(likesByUser).includes(`${comment.author}`)) {
-                likesByUser[comment.author] = comment.likes.length
-            } else {
-                likesByUser[comment.author] += comment.likes.length
-            }
-        })
-
-        const leaders = []
-        Object.entries(likesByUser)
-            .sort((a, b) => b[1] - a[1])
-            .map(([userId, value]) => {
-                const { id, name, avatar } = this.users.filter(user => user.id == userId)[0]
-                leaders.push({ "id": id, "name": name, "avatar": avatar, "valueText": value.toString() })
-            })
-        return leaders
-    }
-
-    getSprintComments(sprintId) {
-        const { startAt: sprintStartAt, finishAt: sprintFinishAt } = this.getSprintMetadata(sprintId)
-        return this.comments.filter(o => (o.createdAt >= sprintStartAt) && (o.createdAt < sprintFinishAt))
-    }
-
-    getSprintLeaders(sprintCommits) {
-        const commitsByUser = {}
-        sprintCommits.map(commit => {
-            if (!Object.keys(commitsByUser).includes(`${commit.author}`)) {
-                commitsByUser[commit.author] = 1
-            } else {
-                commitsByUser[commit.author]++ 
-            }
-        })
-
-        const leaders = []
-        Object.entries(commitsByUser)
-            .sort((a, b) => b[1] - a[1])
-            .map(([userId, value]) => {
-                const { id, name, avatar } = this.users.filter(user => user.id == userId)[0]
-                leaders.push({ "id": id, "name": name, "avatar": avatar, "valueText": value.toString() })
-            })
-        return leaders
-    }
-
-    getActivity(commits) {
-
-        const activity = [
-            new Array(24).fill(0),
-            new Array(24).fill(0),
-            new Array(24).fill(0),
-            new Array(24).fill(0),
-            new Array(24).fill(0),
-            new Array(24).fill(0),
-            new Array(24).fill(0)
-        ]
-
-        commits.map(commit => {
-            const date = new Date(commit.timestamp)
-            const dayOfWeek = date.getDay()
-            const hour = Number(date.getHours())
-            activity[dayOfWeek][hour]++
-        })
-
+        });
+        Object.entries(groupByUser)
+            .sort(function (a, b) { return b[1] - a[1]; })
+            .map(function (_a) {
+            var userId = _a[0], value = _a[1];
+            var user = _this.users.filter(function (user) { return user.id.toString() == userId; })[0];
+            leaders.push({ "id": user.id, "name": user.name, "avatar": user.avatar, "valueText": value.toString() });
+        });
+        return leaders;
+    };
+    DataParser.prototype.getActivity = function () {
+        var activity = new Array(7).fill(new Array(24).fill(0));
+        this.currentSprintCommits.map(function (commit) {
+            var date = new Date(commit.timestamp);
+            var dayOfWeek = date.getDay();
+            var hour = Number(date.getHours());
+            activity[dayOfWeek][hour]++;
+        });
         return {
             "sun": activity[0],
             "mon": activity[1],
@@ -242,109 +106,261 @@ class Slide {
             "thu": activity[4],
             "fri": activity[5],
             "sat": activity[6],
-        }
-    }
-
-    compareSprintCommits() {
-        const comparison = []
-        this.sprints.map(sprint => {
-            const sprintObject = {
+        };
+    };
+    DataParser.prototype.compareSprintCommits = function () {
+        var _this = this;
+        var comparison = this.sprints.map(function (sprint) {
+            var obj = {
                 title: sprint.id.toString(),
                 hint: sprint.name,
-                value: this.getSprintCommits(sprint.id).length
+                value: _this.getSprintCommits(sprint.id).length
+            };
+            if (sprint.id == _this.currentSprintId) {
+                obj.active = true;
             }
-            if (sprint.id == this.currentSprintId) {
-                sprintObject.active = true
-            }
-            comparison.push(sprintObject)
-        })
-        return comparison.sort((a, b) => parseInt(a.title) - parseInt(b.title))
-    }
-
-    compareSprintDiffs(currentSprintDiffs, previousSprintDiffs) {
-        
-        const categories = [
-            { title: "> 1001 строки", currentSprintCount: 0, previousSprintCount: 0},
+            return obj;
+        });
+        return comparison.sort(function (a, b) { return parseInt(a.title) - parseInt(b.title); });
+    };
+    DataParser.prototype.compareSprintDiffs = function () {
+        var currentSprintDiffs = this.getSprintDiffs(this.currentSprintCommits);
+        var previousSprintDiffs = this.getSprintDiffs(this.previousSprintCommits);
+        var categories = [
+            { title: "> 1001 строки", currentSprintCount: 0, previousSprintCount: 0 },
             { title: "501 — 1000 строк", currentSprintCount: 0, previousSprintCount: 0 },
             { title: "101 — 500 строк", currentSprintCount: 0, previousSprintCount: 0 },
             { title: "1 — 100 строк", currentSprintCount: 0, previousSprintCount: 0 }
-        ]
-
-        for (const diff of currentSprintDiffs) {
+        ];
+        for (var _i = 0, currentSprintDiffs_1 = currentSprintDiffs; _i < currentSprintDiffs_1.length; _i++) {
+            var diff = currentSprintDiffs_1[_i];
             if (diff >= 1001) {
-                categories[0]['currentSprintCount']++
-            } else if (diff >= 501) {
-                categories[1]['currentSprintCount']++
-            } else if (diff >= 101) {
-                categories[2]['currentSprintCount']++
-            } else if (diff >= 1) {
-                categories[3]['currentSprintCount']++
+                categories[0]['currentSprintCount']++;
+            }
+            else if (diff >= 501) {
+                categories[1]['currentSprintCount']++;
+            }
+            else if (diff >= 101) {
+                categories[2]['currentSprintCount']++;
+            }
+            else if (diff >= 1) {
+                categories[3]['currentSprintCount']++;
             }
         }
-
-        for (const diff of previousSprintDiffs) {
+        for (var _a = 0, previousSprintDiffs_1 = previousSprintDiffs; _a < previousSprintDiffs_1.length; _a++) {
+            var diff = previousSprintDiffs_1[_a];
             if (diff >= 1001) {
-                categories[0]['previousSprintCount']++
-            } else if (diff >= 501) {
-                categories[1]['previousSprintCount']++
-            } else if (diff >= 101) {
-                categories[2]['previousSprintCount']++
-            } else if (diff >= 1) {
-                categories[3]['previousSprintCount']++
+                categories[0]['previousSprintCount']++;
+            }
+            else if (diff >= 501) {
+                categories[1]['previousSprintCount']++;
+            }
+            else if (diff >= 101) {
+                categories[2]['previousSprintCount']++;
+            }
+            else if (diff >= 1) {
+                categories[3]['previousSprintCount']++;
             }
         }
+        return categories.map(function (_a) {
+            var title = _a.title, currentSprintCount = _a.currentSprintCount, previousSprintCount = _a.previousSprintCount;
+            return {
+                title: title,
+                valueText: currentSprintCount.toString(),
+                differenceText: (currentSprintCount - previousSprintCount).toString()
+            };
+        });
+    };
+    Object.defineProperty(DataParser.prototype, "votes", {
+        get: function () {
+            return this.getSprintLeaders(this.comments, 'likes');
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(DataParser.prototype, "leaders", {
+        get: function () {
+            return this.getSprintLeaders(this.currentSprintCommits, 'commits');
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(DataParser.prototype, "activity", {
+        get: function () {
+            return this.getActivity();
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(DataParser.prototype, "chart", {
+        get: function () {
+            return this.compareSprintCommits();
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(DataParser.prototype, "diagram", {
+        get: function () {
+            return {
+                current: this.currentSprintCommits.length,
+                previous: this.previousSprintCommits.length,
+                categories: this.compareSprintDiffs()
+            };
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(DataParser.prototype, "subtitle", {
+        get: function () {
+            return this.currentSprint.name;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    DataParser.prototype.prepare = function () {
+        this.parseData();
+        this.filterComments();
+        this.filterCommits();
+    };
+    return DataParser;
+}());
 
-        return categories.map(({ title, currentSprintCount, previousSprintCount }) => {
-            return { 
-                title, 
-                valueText: currentSprintCount, 
-                differenceText: currentSprintCount - previousSprintCount
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+
+var __assign = function() {
+    __assign = Object.assign || function __assign(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+
+var Template = (function () {
+    function Template() {
+    }
+    Template.templateLeaders = function (subtitle, users) {
+        return {
+            "alias": "leaders",
+            "data": {
+                "title": "Больше всего коммитов",
+                "subtitle": subtitle,
+                "emoji": "👑",
+                "users": users
             }
-        })
+        };
+    };
+    Template.templateChart = function (subtitle, commitsData, usersData) {
+        return {
+            "alias": "chart",
+            "data": {
+                "title": "Коммиты",
+                "subtitle": subtitle,
+                "values": commitsData,
+                "users": usersData
+            }
+        };
+    };
+    Template.templateDiagram = function (subtitle, data) {
+        var current = data.current, previous = data.previous, categories = data.categories;
+        var difference = current - previous;
+        return {
+            "alias": "diagram",
+            "data": {
+                "title": "Размер коммитов",
+                "subtitle": subtitle,
+                "totalText": this.textProcessed(current, 'diagram'),
+                "differenceText": "" + (difference > 0 ? '+' : '') + difference + " \u0441 \u043F\u0440\u043E\u0448\u043B\u043E\u0433\u043E \u0441\u043F\u0440\u0438\u043D\u0442\u0430",
+                "categories": this.textProcessed(categories, 'diagram')
+            }
+        };
+    };
+    Template.templateActivity = function (subtitle, activity) {
+        return {
+            "alias": "activity",
+            "data": {
+                "title": "Коммиты",
+                "subtitle": subtitle,
+                "data": activity
+            }
+        };
+    };
+    Template.templateVote = function (subtitle, users) {
+        return {
+            "alias": "vote",
+            "data": {
+                "title": "Самый 🔎 внимательный разработчик",
+                "subtitle": subtitle,
+                "emoji": "🔎",
+                "users": this.textProcessed(users, 'vote')
+            }
+        };
+    };
+    Template.textProcessed = function (data, template) {
+        var wordForms = template === 'vote' ? ['голос', 'голоса', 'голосов']
+            : template === 'diagram' ? ['коммит', 'коммита', 'коммитов']
+                : [];
+        var postfix = function (numeral) {
+            var i = Math.abs(Number(numeral)) % 100;
+            if (i >= 11 && i <= 19) {
+                return numeral + " " + wordForms[2];
+            }
+            i = i % 10;
+            var postfix = (i == 1) ? wordForms[0] : (i >= 2 && i <= 4) ? wordForms[1] : wordForms[2];
+            return numeral + " " + postfix;
+        };
+        var processDiagramText = function (data) {
+            if (!(data instanceof Object)) {
+                return postfix(data);
+            }
+            return data.map(function (_a) {
+                var title = _a.title, valueText = _a.valueText, differenceText = _a.differenceText;
+                var prefix = Number(differenceText) > 0 ? '+' : '';
+                return {
+                    title: title,
+                    valueText: postfix(valueText),
+                    differenceText: prefix.concat(postfix(differenceText))
+                };
+            });
+        };
+        var processVoteText = function (data) {
+            return data.map(function (obj) { return (__assign(__assign({}, obj), { valueText: postfix(obj.valueText) })); });
+        };
+        if (template === 'vote') {
+            return processVoteText(data);
+        }
+        else if (template === 'diagram') {
+            return processDiagramText(data);
+        }
+    };
+    return Template;
+}());
 
-    }
-
-
-    prepare() {
-
-        this.parseData()
-
-        const currentCommits = this.getSprintCommits(this.currentSprintId)
-        const currentSprintDiffs = this.getSprintDiffs(currentCommits)
-        const currentSprintComments = this.getSprintComments(this.currentSprintId)
-        const currentSprintLikes = this.getSprintLikes(currentSprintComments)
-        const currentSprintLeaders = this.getSprintLeaders(currentCommits)
-        const currentSprintActivity = this.getActivity(currentCommits)
-
-        const previousCommits = this.getSprintCommits(this.currentSprintId - 1)
-        const previousSprintDiffs = this.getSprintDiffs(previousCommits)
-
-        const sprintsCommitsComparison = this.compareSprintCommits()
-
-        const diffCategories = this.compareSprintDiffs(currentSprintDiffs, previousSprintDiffs)
-
-        const vote = this.templateVote(currentSprintLikes)
-        const leaders = this.templateLeaders(currentSprintLeaders)
-        const chart = this.templateChart(sprintsCommitsComparison, currentSprintLeaders)
-        const diagram = this.templateDiagram(currentCommits, previousCommits, diffCategories)
-        const activity = this.templateActivity(currentSprintActivity)
-
-        return [vote, leaders, chart, diagram, activity]
-    }
-
+function prepareData(entities, _a) {
+    var sprintId = _a.sprintId;
+    var parser = new DataParser(entities, sprintId);
+    parser.prepare();
+    var subtitle = parser.subtitle;
+    var vote = Template.templateVote(subtitle, parser.votes);
+    var leaders = Template.templateLeaders(subtitle, parser.leaders);
+    var chart = Template.templateChart(subtitle, parser.chart, parser.leaders);
+    var diagram = Template.templateDiagram(subtitle, parser.diagram);
+    var activity = Template.templateActivity(subtitle, parser.activity);
+    return [vote, leaders, chart, diagram, activity];
 }
-
-
-function prepareData(entities, { sprintId }) {
-    slide = new Slide(entities, sprintId)
-    const data = slide.prepare()
-    // require('fs').writeFileSync('test.json', JSON.stringify(data));
-    return data
-}
-
-// let rawData = require('fs').readFileSync('input.json');
-// let data = JSON.parse(rawData);
-// prepareData(data, { sprintId: 991 })
-
-
-module.exports = { prepareData }
+module.exports = { prepareData: prepareData };

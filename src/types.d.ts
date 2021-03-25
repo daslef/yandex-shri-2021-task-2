@@ -1,3 +1,6 @@
+import { StoryInterface, ActivityWeek, DiagramCategory } from './stories'
+
+
 /** UUID-like unique key */
 export type UUID = string
 /** 32 or 40 chars */
@@ -99,3 +102,22 @@ export type Entity =
 
 export type EntityId = Entity['id'];
 export type EntityType = Entity['type'];
+
+
+export interface DictInterface {
+    [key: string]: any
+}
+
+export interface LeaderInterface {
+    id: number,
+    name: string, 
+    avatar: string, 
+    valueText: string 
+}
+
+export interface CompareSprintInterface {
+    title: string,
+    hint: string,
+    value: number
+    active?: true
+}

@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "lib": ["es2016", "es2017.object"],
+        "removeComments": true,
+        "resolveJsonModule": true,
+        "allowJs": true,
+        "checkJs": true,
+        "sourceMap": true,
+        "moduleResolution": "node",
+        "noImplicitAny": false,
+        // "strict": true,
+    },
+    "include": ["./src/**/*.ts"]
+}
