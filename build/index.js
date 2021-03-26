@@ -382,6 +382,6 @@ function prepareData(entities, _a) {
     var chart = Template.templateChart(subtitle, parser.chart, parser.leaders);
     var diagram = Template.templateDiagram(subtitle, parser.diagram);
     var activity = Template.templateActivity(subtitle, parser.activity);
-    return [vote, leaders, chart, diagram, activity];
+    return [leaders, vote, chart, diagram, activity];
 }
 module.exports = { prepareData: prepareData };

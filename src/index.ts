@@ -15,7 +15,7 @@ function prepareData(entities: Entity[], { sprintId }: { sprintId: SprintId}) {
     const diagram = Template.templateDiagram(subtitle, parser.diagram)
     const activity = Template.templateActivity(subtitle, parser.activity)
 
-    return [vote, leaders, chart, diagram, activity]
+    return [leaders, vote, chart, diagram, activity]
 
 }
 module.exports = { prepareData }
