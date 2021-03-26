@@ -2,8 +2,9 @@ import Parser from './dataParser'
 import Template from './dataTemplate'
 
 import { Entity, SprintId } from './types'
+import { StoryData } from './stories'
 
-function prepareData(entities: Entity[], { sprintId }: { sprintId: SprintId}) {
+function prepareData(entities: Entity[], { sprintId }: { sprintId: SprintId}): StoryData {
     const parser = new Parser(entities, sprintId);
     parser.prepare();
 

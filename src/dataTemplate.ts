@@ -6,24 +6,24 @@ export default class Template {
 
     static templateLeaders(subtitle: string, users: LeaderInterface[]): StoryInterface {
         return {
-            "alias": "leaders" as TemplateAlias,
-            "data": {
-              "title": "Больше всего коммитов",
-              "subtitle": subtitle, // this.currentSprint.name
-              "emoji": "👑",
-              "users": users
+            alias: "leaders" as TemplateAlias,
+            data: {
+              title: "Больше всего коммитов",
+              subtitle: subtitle, // this.currentSprint.name
+              emoji: "👑",
+              users: users
             }
         }
     }
 
     static templateChart(subtitle: string, commitsData: any[], usersData: LeaderInterface[]): StoryInterface {
         return {
-            "alias": "chart" as TemplateAlias,
-            "data": {
-              "title": "Коммиты",
-              "subtitle": subtitle,
-              "values": commitsData,
-              "users": usersData
+            alias: "chart" as TemplateAlias,
+            data: {
+              title: "Коммиты",
+              subtitle: subtitle,
+              values: commitsData,
+              users: usersData
             }
         }
     }
@@ -34,36 +34,36 @@ export default class Template {
         const difference = current - previous
 
         return {
-            "alias": "diagram" as TemplateAlias,
-            "data": {
-              "title": "Размер коммитов",
-              "subtitle": subtitle,
-              "totalText": this.textProcessed(current, 'diagram'),
-              "differenceText": `${difference > 0 ? '+' : ''}${difference} с прошлого спринта`,
-              "categories": this.textProcessed(categories, 'diagram')
+            alias: "diagram" as TemplateAlias,
+            data: {
+              title: "Размер коммитов",
+              subtitle: subtitle,
+              totalText: this.textProcessed(current, 'diagram'),
+              differenceText: `${difference > 0 ? '+' : ''}${difference} с прошлого спринта`,
+              categories: this.textProcessed(categories, 'diagram')
             }
           }
     }
 
     static templateActivity(subtitle: string, activity: ActivityWeek): StoryInterface {
         return {
-            "alias": "activity" as TemplateAlias,
-            "data": {
-              "title": "Коммиты",
-              "subtitle": subtitle,
-              "data": activity
+            alias: "activity" as TemplateAlias,
+            data: {
+              title: "Коммиты",
+              subtitle: subtitle,
+              data: activity
             }
           }
     }
 
     static templateVote(subtitle: string, users: LeaderInterface[]): StoryInterface {
         return {
-            "alias": "vote" as TemplateAlias,
-            "data": {
-              "title": "Самый 🔎 внимательный разработчик",
-              "subtitle": subtitle,
-              "emoji": "🔎",
-              "users": this.textProcessed(users, 'vote')
+            alias: "vote" as TemplateAlias,
+            data: {
+              title: "Самый 🔎 внимательный разработчик",
+              subtitle: subtitle,
+              emoji: "🔎",
+              users: this.textProcessed(users, 'vote')
             }
           }
     }
