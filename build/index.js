@@ -277,23 +277,23 @@ var Template = (function () {
     }
     Template.templateLeaders = function (subtitle, users) {
         return {
-            "alias": "leaders",
-            "data": {
-                "title": "Больше всего коммитов",
-                "subtitle": subtitle,
-                "emoji": "👑",
-                "users": users
+            alias: "leaders",
+            data: {
+                title: "Больше всего коммитов",
+                subtitle: subtitle,
+                emoji: "👑",
+                users: users
             }
         };
     };
     Template.templateChart = function (subtitle, commitsData, usersData) {
         return {
-            "alias": "chart",
-            "data": {
-                "title": "Коммиты",
-                "subtitle": subtitle,
-                "values": commitsData,
-                "users": usersData
+            alias: "chart",
+            data: {
+                title: "Коммиты",
+                subtitle: subtitle,
+                values: commitsData,
+                users: usersData
             }
         };
     };
@@ -301,34 +301,34 @@ var Template = (function () {
         var current = data.current, previous = data.previous, categories = data.categories;
         var difference = current - previous;
         return {
-            "alias": "diagram",
-            "data": {
-                "title": "Размер коммитов",
-                "subtitle": subtitle,
-                "totalText": this.textProcessed(current, 'diagram'),
-                "differenceText": "" + (difference > 0 ? '+' : '') + difference + " \u0441 \u043F\u0440\u043E\u0448\u043B\u043E\u0433\u043E \u0441\u043F\u0440\u0438\u043D\u0442\u0430",
-                "categories": this.textProcessed(categories, 'diagram')
+            alias: "diagram",
+            data: {
+                title: "Размер коммитов",
+                subtitle: subtitle,
+                totalText: this.textProcessed(current, 'diagram'),
+                differenceText: "" + (difference > 0 ? '+' : '') + difference + " \u0441 \u043F\u0440\u043E\u0448\u043B\u043E\u0433\u043E \u0441\u043F\u0440\u0438\u043D\u0442\u0430",
+                categories: this.textProcessed(categories, 'diagram')
             }
         };
     };
     Template.templateActivity = function (subtitle, activity) {
         return {
-            "alias": "activity",
-            "data": {
-                "title": "Коммиты",
-                "subtitle": subtitle,
-                "data": activity
+            alias: "activity",
+            data: {
+                title: "Коммиты",
+                subtitle: subtitle,
+                data: activity
             }
         };
     };
     Template.templateVote = function (subtitle, users) {
         return {
-            "alias": "vote",
-            "data": {
-                "title": "Самый 🔎 внимательный разработчик",
-                "subtitle": subtitle,
-                "emoji": "🔎",
-                "users": this.textProcessed(users, 'vote')
+            alias: "vote",
+            data: {
+                title: "Самый 🔎 внимательный разработчик",
+                subtitle: subtitle,
+                emoji: "🔎",
+                users: this.textProcessed(users, 'vote')
             }
         };
     };
