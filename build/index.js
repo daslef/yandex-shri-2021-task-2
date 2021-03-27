@@ -324,5 +324,4 @@ class Template {
         return [leaders, vote, chart, diagram, activity];
     }
     exports.prepareData = prepareData;
-})(typeof exports === 'undefined' ?
-    this['sharedModule'] = {} : exports);
+})(typeof exports === 'undefined' ? this['index'] = {} : exports);
