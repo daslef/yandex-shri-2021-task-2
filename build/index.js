@@ -373,6 +373,9 @@ var Template = (function () {
 }());
 
 function prepareData(entities, _a) {
+    if (entities.length == 0 || sprintId == undefined) {
+        return []
+    }
     var sprintId = _a.sprintId;
     var parser = new DataParser(entities, sprintId);
     parser.prepare();

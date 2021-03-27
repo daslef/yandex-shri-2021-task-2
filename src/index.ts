@@ -5,6 +5,11 @@ import { Entity, SprintId } from './types'
 import { StoryData } from './stories'
 
 function prepareData(entities: Entity[], { sprintId }: { sprintId: SprintId}): StoryData {
+
+    if (entities.length == 0 || sprintId == undefined) {
+        return []
+    }
+    
     const parser = new Parser(entities, sprintId);
     parser.prepare();
 
