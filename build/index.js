@@ -323,5 +323,11 @@ class Template {
         const activity = Template.templateActivity(subtitle, parser.activity);
         return [leaders, vote, chart, diagram, activity];
     }
+
+    if (typeof window !== 'undefined' || typeof self !== 'undefined') {
+        window.prepareData = prepareData
+    }
+
     exports.prepareData = prepareData;
+    
 })(typeof exports === 'undefined' ? this['index'] = {} : exports);
