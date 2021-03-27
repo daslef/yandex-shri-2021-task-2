@@ -1,7 +1,7 @@
 'use strict';
 
-var DataParser = (function () {
-    function DataParser(data, id) {
+class DataParser {
+    constructor(data, id) {
         this.users = [];
         this.sprints = [];
         this.commits = [];
@@ -12,69 +12,65 @@ var DataParser = (function () {
         this.data = data;
         this.currentSprintId = id;
     }
-    DataParser.prototype.parseData = function () {
-        var _this = this;
-        this.data.map(function (obj) {
+    parseData() {
+        this.data.map(obj => {
             if (obj.type == 'User') {
-                _this.users.push(obj);
+                this.users.push(obj);
             }
             else if (obj.type == 'Sprint') {
-                if (obj.id == _this.currentSprintId) {
-                    _this.currentSprint = obj;
+                if (obj.id == this.currentSprintId) {
+                    this.currentSprint = obj;
                 }
-                _this.sprints.push(obj);
+                this.sprints.push(obj);
             }
             else if (obj.type == 'Commit') {
-                _this.commits.push(obj);
+                this.commits.push(obj);
             }
             else if (obj.type == 'Summary') {
-                _this.summaries.push(obj);
+                this.summaries.push(obj);
             }
             else if (obj.type == 'Comment') {
-                _this.comments.push(obj);
+                this.comments.push(obj);
             }
         });
-    };
-    DataParser.prototype.filterComments = function () {
-        var _a = this.getSprintMetadata(this.currentSprintId), startAt = _a.startAt, finishAt = _a.finishAt;
-        this.comments = this.comments.filter(function (o) { return (o.createdAt >= startAt) && (o.createdAt < finishAt); });
-    };
-    DataParser.prototype.filterCommits = function () {
+    }
+    filterComments() {
+        const { startAt, finishAt } = this.getSprintMetadata(this.currentSprintId);
+        this.comments = this.comments.filter(o => (o.createdAt >= startAt) && (o.createdAt < finishAt));
+    }
+    filterCommits() {
         this.currentSprintCommits = this.getSprintCommits(this.currentSprintId);
         this.previousSprintCommits = this.getSprintCommits(this.currentSprintId - 1);
-    };
-    DataParser.prototype.getSprintMetadata = function (sprintId) {
-        return this.sprints.filter(function (sprint) { return sprint.id == sprintId; })[0];
-    };
-    DataParser.prototype.getSprintCommits = function (sprintId) {
-        var _a = this.getSprintMetadata(sprintId), startAt = _a.startAt, finishAt = _a.finishAt;
-        return this.commits.filter(function (o) {
+    }
+    getSprintMetadata(sprintId) {
+        return this.sprints.filter((sprint) => sprint.id == sprintId)[0];
+    }
+    getSprintCommits(sprintId) {
+        const { startAt, finishAt } = this.getSprintMetadata(sprintId);
+        return this.commits.filter((o) => {
             return (o.timestamp >= startAt) && (o.timestamp < finishAt);
         });
-    };
-    DataParser.prototype.getCommitSummaries = function (commit) {
-        var _this = this;
-        return commit.summaries.map(function (summaryId) {
-            return _this.summaries.filter(function (obj) { return obj.id == summaryId; })[0];
+    }
+    getCommitSummaries(commit) {
+        return commit.summaries.map(summaryId => {
+            return this.summaries.filter((obj) => obj.id == summaryId)[0];
         });
-    };
-    DataParser.prototype.getCommitDiff = function (commit) {
+    }
+    getCommitDiff(commit) {
         return this
             .getCommitSummaries(commit)
-            .map(function (summary) { return summary.added + summary.removed; });
-    };
-    DataParser.prototype.getSprintDiffs = function (sprintCommits) {
-        var _this = this;
+            .map(summary => summary.added + summary.removed);
+    }
+    getSprintDiffs(sprintCommits) {
         return sprintCommits
-            .map(function (commit) { return _this.getCommitDiff(commit); })
-            .map(function (commitDiffs) { return commitDiffs.reduce(function (acc, cur) { return acc + cur; }, 0); });
-    };
-    DataParser.prototype.getSprintLeaders = function (data, category) {
-        var _this = this;
-        var groupByUser = {};
-        var leaders = [];
-        data.map(function (obj) {
-            var index = obj.author instanceof Object
+            .map(commit => this.getCommitDiff(commit))
+            .map(commitDiffs => commitDiffs.reduce((acc, cur) => acc + cur, 0));
+    }
+    getSprintLeaders(data, category) {
+        const groupByUser = {};
+        const leaders = [];
+        data.map((obj) => {
+            const index = obj.author instanceof Object
                 ? obj.author.id.toString()
                 : obj.author.toString();
             if (!Object.keys(groupByUser).includes(index)) {
@@ -95,16 +91,15 @@ var DataParser = (function () {
             }
         });
         Object.entries(groupByUser)
-            .sort(function (a, b) { return b[1] - a[1]; })
-            .map(function (_a) {
-            var userId = _a[0], value = _a[1];
-            var user = _this.users.filter(function (user) { return user.id.toString() == userId; })[0];
+            .sort((a, b) => b[1] - a[1])
+            .map(([userId, value]) => {
+            const user = this.users.filter((user) => user.id.toString() == userId)[0];
             leaders.push({ "id": user.id, "name": user.name, "avatar": user.avatar, "valueText": value.toString() });
         });
         return leaders;
-    };
-    DataParser.prototype.getActivity = function () {
-        var activity = [
+    }
+    getActivity() {
+        const activity = [
             new Array(24).fill(0),
             new Array(24).fill(0),
             new Array(24).fill(0),
@@ -113,10 +108,10 @@ var DataParser = (function () {
             new Array(24).fill(0),
             new Array(24).fill(0)
         ];
-        this.currentSprintCommits.map(function (commit) {
-            var date = new Date(commit.timestamp);
-            var dayOfWeek = date.getDay();
-            var hour = Number(date.getHours());
+        this.currentSprintCommits.map(commit => {
+            const date = new Date(commit.timestamp);
+            const dayOfWeek = date.getDay();
+            const hour = Number(date.getHours());
             activity[dayOfWeek][hour]++;
         });
         return {
@@ -128,33 +123,31 @@ var DataParser = (function () {
             "fri": activity[5],
             "sat": activity[6],
         };
-    };
-    DataParser.prototype.compareSprintCommits = function () {
-        var _this = this;
-        var comparison = this.sprints.map(function (sprint) {
-            var obj = {
+    }
+    compareSprintCommits() {
+        const comparison = this.sprints.map(sprint => {
+            const obj = {
                 title: sprint.id.toString(),
                 hint: sprint.name,
-                value: _this.getSprintCommits(sprint.id).length
+                value: this.getSprintCommits(sprint.id).length
             };
-            if (sprint.id == _this.currentSprintId) {
+            if (sprint.id == this.currentSprintId) {
                 obj.active = true;
             }
             return obj;
         });
-        return comparison.sort(function (a, b) { return parseInt(a.title) - parseInt(b.title); });
-    };
-    DataParser.prototype.compareSprintDiffs = function () {
-        var currentSprintDiffs = this.getSprintDiffs(this.currentSprintCommits);
-        var previousSprintDiffs = this.getSprintDiffs(this.previousSprintCommits);
-        var categories = [
+        return comparison.sort((a, b) => parseInt(a.title) - parseInt(b.title));
+    }
+    compareSprintDiffs() {
+        const currentSprintDiffs = this.getSprintDiffs(this.currentSprintCommits);
+        const previousSprintDiffs = this.getSprintDiffs(this.previousSprintCommits);
+        const categories = [
             { title: "> 1001 строки", currentSprintCount: 0, previousSprintCount: 0 },
             { title: "501 — 1000 строк", currentSprintCount: 0, previousSprintCount: 0 },
             { title: "101 — 500 строк", currentSprintCount: 0, previousSprintCount: 0 },
             { title: "1 — 100 строк", currentSprintCount: 0, previousSprintCount: 0 }
         ];
-        for (var _i = 0, currentSprintDiffs_1 = currentSprintDiffs; _i < currentSprintDiffs_1.length; _i++) {
-            var diff = currentSprintDiffs_1[_i];
+        for (const diff of currentSprintDiffs) {
             if (diff >= 1001) {
                 categories[0]['currentSprintCount']++;
             }
@@ -168,8 +161,7 @@ var DataParser = (function () {
                 categories[3]['currentSprintCount']++;
             }
         }
-        for (var _a = 0, previousSprintDiffs_1 = previousSprintDiffs; _a < previousSprintDiffs_1.length; _a++) {
-            var diff = previousSprintDiffs_1[_a];
+        for (const diff of previousSprintDiffs) {
             if (diff >= 1001) {
                 categories[0]['previousSprintCount']++;
             }
@@ -183,99 +175,45 @@ var DataParser = (function () {
                 categories[3]['previousSprintCount']++;
             }
         }
-        return categories.map(function (_a) {
-            var title = _a.title, currentSprintCount = _a.currentSprintCount, previousSprintCount = _a.previousSprintCount;
+        return categories.map(({ title, currentSprintCount, previousSprintCount }) => {
             return {
-                title: title,
+                title,
                 valueText: currentSprintCount.toString(),
                 differenceText: (currentSprintCount - previousSprintCount).toString()
             };
         });
-    };
-    Object.defineProperty(DataParser.prototype, "votes", {
-        get: function () {
-            return this.getSprintLeaders(this.comments, 'likes');
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(DataParser.prototype, "leaders", {
-        get: function () {
-            return this.getSprintLeaders(this.currentSprintCommits, 'commits');
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(DataParser.prototype, "activity", {
-        get: function () {
-            return this.getActivity();
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(DataParser.prototype, "chart", {
-        get: function () {
-            return this.compareSprintCommits();
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(DataParser.prototype, "diagram", {
-        get: function () {
-            return {
-                current: this.currentSprintCommits.length,
-                previous: this.previousSprintCommits.length,
-                categories: this.compareSprintDiffs()
-            };
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(DataParser.prototype, "subtitle", {
-        get: function () {
-            return this.currentSprint.name;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    DataParser.prototype.prepare = function () {
+    }
+    get votes() {
+        return this.getSprintLeaders(this.comments, 'likes');
+    }
+    get leaders() {
+        return this.getSprintLeaders(this.currentSprintCommits, 'commits');
+    }
+    get activity() {
+        return this.getActivity();
+    }
+    get chart() {
+        return this.compareSprintCommits();
+    }
+    get diagram() {
+        return {
+            current: this.currentSprintCommits.length,
+            previous: this.previousSprintCommits.length,
+            categories: this.compareSprintDiffs()
+        };
+    }
+    get subtitle() {
+        return this.currentSprint.name;
+    }
+    prepare() {
         this.parseData();
         this.filterComments();
         this.filterCommits();
-    };
-    return DataParser;
-}());
-
-/*! *****************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-
-var __assign = function() {
-    __assign = Object.assign || function __assign(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
-
-var Template = (function () {
-    function Template() {
     }
-    Template.templateLeaders = function (subtitle, users) {
+}
+
+class Template {
+    static templateLeaders(subtitle, users) {
         return {
             alias: "leaders",
             data: {
@@ -285,8 +223,8 @@ var Template = (function () {
                 users: users
             }
         };
-    };
-    Template.templateChart = function (subtitle, commitsData, usersData) {
+    }
+    static templateChart(subtitle, commitsData, usersData) {
         return {
             alias: "chart",
             data: {
@@ -296,22 +234,22 @@ var Template = (function () {
                 users: usersData
             }
         };
-    };
-    Template.templateDiagram = function (subtitle, data) {
-        var current = data.current, previous = data.previous, categories = data.categories;
-        var difference = current - previous;
+    }
+    static templateDiagram(subtitle, data) {
+        const { current, previous, categories } = data;
+        const difference = current - previous;
         return {
             alias: "diagram",
             data: {
                 title: "Размер коммитов",
                 subtitle: subtitle,
                 totalText: this.textProcessed(current, 'diagram'),
-                differenceText: "" + (difference > 0 ? '+' : '') + difference + " \u0441 \u043F\u0440\u043E\u0448\u043B\u043E\u0433\u043E \u0441\u043F\u0440\u0438\u043D\u0442\u0430",
+                differenceText: `${difference > 0 ? '+' : ''}${difference} с прошлого спринта`,
                 categories: this.textProcessed(categories, 'diagram')
             }
         };
-    };
-    Template.templateActivity = function (subtitle, activity) {
+    }
+    static templateActivity(subtitle, activity) {
         return {
             alias: "activity",
             data: {
@@ -320,8 +258,8 @@ var Template = (function () {
                 data: activity
             }
         };
-    };
-    Template.templateVote = function (subtitle, users) {
+    }
+    static templateVote(subtitle, users) {
         return {
             alias: "vote",
             data: {
@@ -331,36 +269,35 @@ var Template = (function () {
                 users: this.textProcessed(users, 'vote')
             }
         };
-    };
-    Template.textProcessed = function (data, template) {
-        var wordForms = template === 'vote' ? ['голос', 'голоса', 'голосов']
+    }
+    static textProcessed(data, template) {
+        const wordForms = template === 'vote' ? ['голос', 'голоса', 'голосов']
             : template === 'diagram' ? ['коммит', 'коммита', 'коммитов']
                 : [];
-        var postfix = function (numeral) {
-            var i = Math.abs(Number(numeral)) % 100;
+        const postfix = (numeral) => {
+            let i = Math.abs(Number(numeral)) % 100;
             if (i >= 11 && i <= 19) {
-                return numeral + " " + wordForms[2];
+                return `${numeral} ${wordForms[2]}`;
             }
             i = i % 10;
-            var postfix = (i == 1) ? wordForms[0] : (i >= 2 && i <= 4) ? wordForms[1] : wordForms[2];
-            return numeral + " " + postfix;
+            const postfix = (i == 1) ? wordForms[0] : (i >= 2 && i <= 4) ? wordForms[1] : wordForms[2];
+            return `${numeral} ${postfix}`;
         };
-        var processDiagramText = function (data) {
+        const processDiagramText = (data) => {
             if (!(data instanceof Object)) {
                 return postfix(data);
             }
-            return data.map(function (_a) {
-                var title = _a.title, valueText = _a.valueText, differenceText = _a.differenceText;
-                var prefix = Number(differenceText) > 0 ? '+' : '';
+            return data.map(({ title, valueText, differenceText }) => {
+                const prefix = Number(differenceText) > 0 ? '+' : '';
                 return {
-                    title: title,
+                    title,
                     valueText: postfix(valueText),
                     differenceText: prefix.concat(postfix(differenceText))
                 };
             });
         };
-        var processVoteText = function (data) {
-            return data.map(function (obj) { return (__assign(__assign({}, obj), { valueText: postfix(obj.valueText) })); });
+        const processVoteText = (data) => {
+            return data.map(obj => (Object.assign(Object.assign({}, obj), { valueText: postfix(obj.valueText) })));
         };
         if (template === 'vote') {
             return processVoteText(data);
@@ -368,23 +305,24 @@ var Template = (function () {
         else if (template === 'diagram') {
             return processDiagramText(data);
         }
-    };
-    return Template;
-}());
-
-function prepareData(entities, _a) {
-    if (entities.length == 0 || sprintId == undefined) {
-        return []
     }
-    var sprintId = _a.sprintId;
-    var parser = new DataParser(entities, sprintId);
-    parser.prepare();
-    var subtitle = parser.subtitle;
-    var vote = Template.templateVote(subtitle, parser.votes);
-    var leaders = Template.templateLeaders(subtitle, parser.leaders);
-    var chart = Template.templateChart(subtitle, parser.chart, parser.leaders);
-    var diagram = Template.templateDiagram(subtitle, parser.diagram);
-    var activity = Template.templateActivity(subtitle, parser.activity);
-    return [leaders, vote, chart, diagram, activity];
 }
-module.exports = { prepareData: prepareData };
+
+(function (exports) {
+    function prepareData(entities, { sprintId }) {
+        if (entities.length == 0 || sprintId == undefined) {
+            return [];
+        }
+        const parser = new DataParser(entities, sprintId);
+        parser.prepare();
+        const subtitle = parser.subtitle;
+        const vote = Template.templateVote(subtitle, parser.votes);
+        const leaders = Template.templateLeaders(subtitle, parser.leaders);
+        const chart = Template.templateChart(subtitle, parser.chart, parser.leaders);
+        const diagram = Template.templateDiagram(subtitle, parser.diagram);
+        const activity = Template.templateActivity(subtitle, parser.activity);
+        return [leaders, vote, chart, diagram, activity];
+    }
+    exports.prepareData = prepareData;
+})(typeof exports === 'undefined' ?
+    this['sharedModule'] = {} : exports);
