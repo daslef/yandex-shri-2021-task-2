@@ -220,10 +220,10 @@ function prepareData(entities, { sprintId }) {
    // const parser = new DataParser(entities, sprintId)
    // parser.prepare()
 
-   // const vote = {
-   //    alias: 'vote',
-   //    data: {}
-   // }
+   const vote = {
+      alias: 'vote',
+      data: {}
+   }
 
    const leaders = {
       alias: 'leaders',
@@ -249,5 +249,4 @@ function prepareData(entities, { sprintId }) {
 }
 
 module.exports = { prepareData }
-
 // module.exports = { prepareData, DataParser }
