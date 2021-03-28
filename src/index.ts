@@ -28,5 +28,4 @@ import { StoryData } from './stories'
        
     exports.prepareData = prepareData;
        
-})(typeof exports === 'undefined'? 
-            this['sharedModule']={}: exports);
+})(typeof exports === 'undefined'? this['sharedModule']={}: exports);
