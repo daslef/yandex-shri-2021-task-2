@@ -217,18 +217,27 @@ function prepareData(entities, { sprintId }) {
       return []
    }
    
-   // const parser = new DataParser(entities, sprintId)
-   // parser.prepare()
+   const parser = new DataParser(entities, sprintId)
+   parser.prepare()
+
+   function templateLeaders(subtitle, users) {
+      return {
+          alias: "leaders",
+          data: {
+              title: "Больше всего коммитов",
+              subtitle: subtitle,
+              emoji: "👑",
+              users: users
+          }
+      };
+   }
 
    const vote = {
       alias: 'vote',
       data: {}
    }
 
-   const leaders = {
-      alias: 'leaders',
-      data: {}
-   }
+   const leaders = templateLeaders(parser.subtitle, [])
 
    const chart = {
       alias: 'chart',
@@ -248,5 +257,5 @@ function prepareData(entities, { sprintId }) {
    return [leaders, vote, chart, diagram, activity]    
 }
 
-module.exports = { prepareData }
-// module.exports = { prepareData, DataParser }
+// module.exports = { prepareData }
+module.exports = { prepareData, DataParser }

@@ -76,6 +76,7 @@ describe('dataParser testing on intermediate sprint', () => {
     });
 
     test('should get sprint metadata', () => {
+        parser.parseData();
         const output = parser.getSprintMetadata(982)
         expect(output).toBeDefined()
         expect(output).toStrictEqual({
@@ -85,9 +86,33 @@ describe('dataParser testing on intermediate sprint', () => {
             "startAt": 1606597502000,
             "finishAt": 1607202302000
         })
+    });
+
+    test('should get commit diff', () => {
+        parser.parseData();
+        
     })
 
 });
+
+
+
+getCommitSummaries(commit) {
+    return commit.summaries.map(summaryId => {
+        return this.summaries.filter((obj) => obj.id == summaryId)[0];
+    });
+}
+getCommitDiff(commit) {
+    return this
+        .getCommitSummaries(commit)
+        .map(summary => summary.added + summary.removed);
+}
+getSprintDiffs(sprintCommits) {
+    return sprintCommits
+        .map(commit => this.getCommitDiff(commit))
+        .map(commitDiffs => commitDiffs.reduce((acc, cur) => acc + cur, 0));
+}
+
 
     // this.data = data;
     // this.currentSprintId = id;
