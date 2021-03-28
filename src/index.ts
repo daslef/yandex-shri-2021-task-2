@@ -23,7 +23,7 @@ import { StoryData } from './stories'
         const diagram = Template.templateDiagram(subtitle, parser.diagram)
         const activity = Template.templateActivity(subtitle, parser.activity)
     
-        return [leaders, vote, chart, diagram, activity]    
+        return [leaders, vote, chart, diagram, activity]
     }
        
     exports.prepareData = prepareData;
