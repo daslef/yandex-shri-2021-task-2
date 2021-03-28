@@ -217,13 +217,13 @@ function prepareData(entities, { sprintId }) {
       return []
    }
    
-   const parser = new DataParser(entities, sprintId)
-   parser.prepare()
+   // const parser = new DataParser(entities, sprintId)
+   // parser.prepare()
 
-   const vote = {
-      alias: 'vote',
-      data: {}
-   }
+   // const vote = {
+   //    alias: 'vote',
+   //    data: {}
+   // }
 
    const leaders = {
       alias: 'leaders',
@@ -234,10 +234,12 @@ function prepareData(entities, { sprintId }) {
       alias: 'chart',
       data: {}
    }
+
    const diagram = {
       alias: 'diagram',
       data: {}
    }
+
    const activity = {
       alias: 'activity',
       data: {}
@@ -246,4 +248,6 @@ function prepareData(entities, { sprintId }) {
    return [leaders, vote, chart, diagram, activity]    
 }
 
-module.exports = { prepareData, DataParser }
+module.exports = { prepareData }
+
+// module.exports = { prepareData, DataParser }

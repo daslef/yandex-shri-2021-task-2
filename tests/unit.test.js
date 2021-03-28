@@ -71,9 +71,21 @@ describe('dataParser testing on intermediate sprint', () => {
     test('should filter commits', () => {
         parser.parseData();
         parser.filterCommits()
-        expect(parser.previousSprintCommits).toBeDefined;
-        expect(parser.currentSprintCommits).toBeDefined;
+        expect(parser.previousSprintCommits).toBeDefined();
+        expect(parser.currentSprintCommits).toBeDefined();
     });
+
+    test('should get sprint metadata', () => {
+        const output = parser.getSprintMetadata(982)
+        expect(output).toBeDefined()
+        expect(output).toStrictEqual({
+            "id": 982,
+            "type": "Sprint",
+            "name": "F5",
+            "startAt": 1606597502000,
+            "finishAt": 1607202302000
+        })
+    })
 
 });
 
