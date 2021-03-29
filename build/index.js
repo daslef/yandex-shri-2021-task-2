@@ -43,10 +43,17 @@ class DataParser {
         this.previousSprintCommits = this.getSprintCommits(this.currentSprintId - 1);
     }
     getSprintMetadata(sprintId) {
-        return this.sprints.filter((sprint) => sprint.id == sprintId)[0];
+        const filteredSprints = this.sprints.filter((sprint) => sprint.id == sprintId)
+        if (filteredSprints.length === 0) {
+            return { startAt: null, finishAt: null}
+        }
+        return filteredSprints[0];
     }
     getSprintCommits(sprintId) {
         const { startAt, finishAt } = this.getSprintMetadata(sprintId);
+        if (!startAt || !finishAt) {
+            return []
+        }
         return this.commits.filter((o) => {
             return (o.timestamp >= startAt) && (o.timestamp < finishAt);
         });
@@ -297,6 +304,9 @@ class Template {
             });
         };
         const processVoteText = (data) => {
+            if (!(data instanceof Array)) {
+                return []
+            }
             return data.map(obj => (Object.assign(Object.assign({}, obj), { valueText: postfix(obj.valueText) })));
         };
         if (template === 'vote') {
@@ -310,18 +320,18 @@ class Template {
 
 (function (exports) {
     function prepareData(entities, { sprintId }) {
-        
         if (entities.length == 0 || sprintId == undefined) {
             return [];
         }
+        
         const parser = new DataParser(entities, sprintId);
         parser.prepare();
 
         const subtitle = parser.subtitle;
-        const vote = Template.templateVote(subtitle, {});
-        const leaders = Template.templateLeaders(subtitle, {});
-        const chart = {alias: 'chart', data: {}};
-        const diagram = Template.templateDiagram(subtitle, {});
+        const vote = Template.templateVote(subtitle, parser.votes);
+        const leaders = Template.templateLeaders(subtitle, parser.leaders);
+        const chart = Template.templateChart(subtitle, parser.chart, parser.leaders);
+        const diagram = Template.templateDiagram(subtitle, parser.diagram);
         const activity = Template.templateActivity(subtitle, parser.activity);
         return [leaders, vote, chart, diagram, activity];
     }

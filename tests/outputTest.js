@@ -5,8 +5,9 @@ const { prepareData } = require('../build/index')
 
 const input = JSON.parse(fs.readFileSync('data/input.json'));
 
-const output = prepareData(input, { sprintId: 977 })
+const output = prepareData(input, { sprintId: 958 })
 console.log(output)
+
 // const trueOutput = JSON.parse(fs.readFileSync('data/output.json'));
 
 // if (!equal(output, trueOutput)) {
