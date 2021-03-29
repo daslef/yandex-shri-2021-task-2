@@ -12,6 +12,15 @@ class DataParser {
         this.data = data;
         this.currentSprintId = id;
     }
+    reset() {
+        this.users = [];
+        this.sprints = [];
+        this.commits = [];
+        this.summaries = [];
+        this.comments = [];
+        this.currentSprintCommits = [];
+        this.previousSprintCommits = [];
+    }
     parseData() {
         this.data.map(obj => {
             if (obj.type == 'User') {
@@ -43,16 +52,16 @@ class DataParser {
         this.previousSprintCommits = this.getSprintCommits(this.currentSprintId - 1);
     }
     getSprintMetadata(sprintId) {
-        const filteredSprints = this.sprints.filter((sprint) => sprint.id == sprintId)
-        if (filteredSprints.length === 0) {
-            return { startAt: null, finishAt: null}
+        const filtered = this.sprints.filter((sprint) => sprint.id == sprintId);
+        if (filtered.length === 0) {
+            return { startAt: null, finishAt: null };
         }
-        return filteredSprints[0];
+        return filtered[0];
     }
     getSprintCommits(sprintId) {
         const { startAt, finishAt } = this.getSprintMetadata(sprintId);
         if (!startAt || !finishAt) {
-            return []
+            return [];
         }
         return this.commits.filter((o) => {
             return (o.timestamp >= startAt) && (o.timestamp < finishAt);
@@ -305,7 +314,7 @@ class Template {
         };
         const processVoteText = (data) => {
             if (!(data instanceof Array)) {
-                return []
+                return [];
             }
             return data.map(obj => (Object.assign(Object.assign({}, obj), { valueText: postfix(obj.valueText) })));
         };
@@ -323,10 +332,8 @@ class Template {
         if (entities.length == 0 || sprintId == undefined) {
             return [];
         }
-        
         const parser = new DataParser(entities, sprintId);
         parser.prepare();
-
         const subtitle = parser.subtitle;
         const vote = Template.templateVote(subtitle, parser.votes);
         const leaders = Template.templateLeaders(subtitle, parser.leaders);
@@ -335,11 +342,5 @@ class Template {
         const activity = Template.templateActivity(subtitle, parser.activity);
         return [leaders, vote, chart, diagram, activity];
     }
-
-    if (typeof window !== 'undefined' || typeof self !== 'undefined') {
-        window.prepareData = prepareData
-    }
-
     exports.prepareData = prepareData;
-    
 })(typeof exports === 'undefined' ? this['index'] = {} : exports);

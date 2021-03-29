@@ -1,5 +1,5 @@
-import { TemplateAlias, StoryInterface, ActivityWeek } from './stories'
-import { LeaderInterface } from './types'
+import { TemplateAlias, StoryInterface, ActivityWeek } from './types/stories'
+import { LeaderInterface } from './types/types'
 
 
 export default class Template {
@@ -9,7 +9,7 @@ export default class Template {
             alias: "leaders" as TemplateAlias,
             data: {
               title: "Больше всего коммитов",
-              subtitle: subtitle, // this.currentSprint.name
+              subtitle: subtitle,
               emoji: "👑",
               users: users
             }
@@ -105,6 +105,9 @@ export default class Template {
         }
 
         const processVoteText = (data) => {
+            if (!(data instanceof Array)) {
+                return []
+            }
             return data.map(obj => ({ ...obj, valueText: postfix(obj.valueText) }))
         }
 

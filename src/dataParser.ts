@@ -1,7 +1,7 @@
-import { ActivityWeek, DiagramCategory } from './stories'
+import { ActivityWeek, DiagramCategory } from './types/stories'
 
 import { Entity, SprintId, Sprint, Commit, Summary, Comment, User,
-        DictInterface, LeaderInterface, CompareSprintInterface } from './types'
+        DictInterface, LeaderInterface, CompareSprintInterface } from './types/types'
 
 
 export interface DataParserInterface {
@@ -41,6 +41,17 @@ export default class DataParser implements DataParserInterface {
         this.currentSprintId = id
     }
 
+    reset(): void {
+        this.users = [];
+        this.sprints = [];
+        this.commits = [];
+        this.summaries = [];
+        this.comments = [];
+    
+        this.currentSprintCommits = [];
+        this.previousSprintCommits = [];
+    }
+
     parseData(): void {
         this.data.map(obj => {
             if (obj.type == 'User') {
@@ -70,12 +81,19 @@ export default class DataParser implements DataParserInterface {
         this.previousSprintCommits = this.getSprintCommits(this.currentSprintId - 1)
     }
 
-    getSprintMetadata(sprintId: SprintId): Sprint {
-        return this.sprints.filter((sprint: Sprint) => sprint.id == sprintId)[0]
+    getSprintMetadata(sprintId: SprintId): Sprint | { startAt: null, finishAt: null } {
+        const filtered = this.sprints.filter((sprint: Sprint) => sprint.id == sprintId)
+        if (filtered.length === 0) {
+            return { startAt: null, finishAt: null }
+        }
+        return filtered[0]
     }
     
     getSprintCommits(sprintId: SprintId): Commit[] {
         const { startAt, finishAt } = this.getSprintMetadata(sprintId)
+        if (!startAt || !finishAt) {
+            return []
+        }
         return this.commits.filter((o: Commit) => {
             return (o.timestamp >= startAt) && (o.timestamp < finishAt)
         })

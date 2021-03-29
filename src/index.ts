@@ -1,8 +1,8 @@
 import Parser from './dataParser'
 import Template from './dataTemplate'
 
-import { Entity, SprintId } from './types'
-import { StoryData } from './stories'
+import { Entity, SprintId } from './types/types'
+import { StoryData } from './types/stories'
 
 (function(exports) {
    
@@ -28,4 +28,4 @@ import { StoryData } from './stories'
        
     exports.prepareData = prepareData;
        
-})(typeof exports === 'undefined'? this['sharedModule']={}: exports);
+})(typeof exports === 'undefined'? this['index']={}: exports);
