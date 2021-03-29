@@ -91,21 +91,3 @@ test('should get sprint metadata', () => {
         "finishAt": 1607202302000
     })
 });
-
-
-
-// getCommitSummaries(commit) {
-//     return commit.summaries.map(summaryId => {
-//         return this.summaries.filter((obj) => obj.id == summaryId)[0];
-//     });
-// }
-// getCommitDiff(commit) {
-//     return this
-//         .getCommitSummaries(commit)
-//         .map(summary => summary.added + summary.removed);
-// }
-// getSprintDiffs(sprintCommits) {
-//     return sprintCommits
-//         .map(commit => this.getCommitDiff(commit))
-//         .map(commitDiffs => commitDiffs.reduce((acc, cur) => acc + cur, 0));
-// }
